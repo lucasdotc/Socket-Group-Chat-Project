@@ -26,7 +26,7 @@ public class Server {
             }).start();
         }
 
-    } //test
+    } //test1
     public void startServer(ServerSocket serverSocket) throws IOException{
         System.out.println("Start server socket BEGIN");
         System.out.println("Waiting for client to connect...");
