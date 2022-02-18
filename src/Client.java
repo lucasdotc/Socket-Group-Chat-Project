@@ -14,64 +14,59 @@ public class Client {
 
 
     public static void main(String[]args) throws IOException{
-        setClientName();
-        new Client().startClient();
-    }
-    public static void setClientName(){
         Scanner sc = new Scanner(System.in);
         System.out.println("Enter your username: ");
         clientName = sc.nextLine();
+        new Client().startClient(clientName);
     }
 
-    public String getClientName(){
-        return this.clientName;
-    }
-
-
-    public void startClient() throws IOException{
+    public void startClient(String clientName) throws IOException{
         clientSocket = new Socket(IP,8081);
         outToServer = new PrintWriter(clientSocket.getOutputStream());
         inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+        System.out.println("Welcome, "+clientName+"!");
+        receiveMessages();
         Scanner sc = new Scanner(System.in);
-        Thread sender = new Thread(new Runnable() {
-            String text;
-            @Override
-            public void run() {
-                    while(!"STOP".equals(text)){
-                        text = sc.nextLine();
-                        outToServer.write(clientName+":"+text);
-                        outToServer.flush();
-                }
+        String messageToSend = "";
+        while (!"STOP".equals(messageToSend)){
+            messageToSend = sc.nextLine();
+            sendAMessage(clientName, messageToSend);
+            System.out.println("["+clientName+"]: "+messageToSend);
 
-            }
-        });
-        sender.start();
-
-        Thread receiver = new Thread(new Runnable() {
-            String text;
-            @Override
-            public void run() {
-                try {
-                    text = inFromServer.readLine();
-                    while (!"STOP".equals(text)){
-                        if (text == null){
-                            continue;
-                        }
-                        System.out.println(clientName+":"+ text);
-                        text = inFromServer.readLine();
-                    }System.out.println(clientName+" has left the chat!");
-
-                    clientSocket.close();
-                    outToServer.close();
-                    inFromServer.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-            }
-        });
-        receiver .start();
+        }
+        clientSocket.close();
+        outToServer.close();
+        inFromServer.close();
     }
 
+    public void sendAMessage(String clientName, String messageToSend) throws IOException{
+        outToServer.write(clientName);
+        outToServer.flush();
 
+        while(clientSocket.isConnected()){
+            outToServer.write("["+clientName+"]"+messageToSend);
+            outToServer.flush();
+        }
+    }
+
+    public void receiveMessages(){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String messageFromChat;
+                while (clientSocket.isConnected()){
+                    try {
+                        messageFromChat = inFromServer.readLine();
+                        System.out.println(messageFromChat);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
+    }
+
+    public void closeEverything(Socket socket, PrintWriter in, BufferedReader out){
+
+    }
 }
