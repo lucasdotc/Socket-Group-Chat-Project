@@ -15,20 +15,34 @@ public class ClientHandler implements Runnable{
         this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         this.clientName = in.readLine();
         clientHandlers.add(this);
-        announce(clientName,"[SERVER]: "+ clientName+" has joined the chat!");
-        closeAll(socket,out,in);
+        announce("[SERVER]: "+ clientName+" has joined the chat!");
+
     }
-    public void announce(String clientName, String message)throws IOException{
+    @Override
+    public void run() {
+        System.out.println("test");
+        String textFromClient;
+        while (socket.isConnected()){
+            try{
+                textFromClient = in.readLine();
+                announce(textFromClient);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void announce(String message)throws IOException{
         for (ClientHandler clientHandler: clientHandlers){
             clientHandler.out.write(clientName + message);
             clientHandler.out.flush();
-        }closeAll(socket,out,in);
+        }
     }
     public void removeClient() throws IOException{
         clientHandlers.remove(this);
-        announce(clientName, "[SERVER]:"+ clientName +" has left the chat.");
+        announce("[SERVER]:"+ clientName +" has left the chat.");
 
-        closeAll(socket,out,in);
+
     }
 
     public void closeAll(Socket socket, PrintWriter out, BufferedReader in) throws IOException{
@@ -46,16 +60,5 @@ public class ClientHandler implements Runnable{
     }
 
 
-    @Override
-    public void run() {
-        String textFromClient;
-        while (socket.isConnected()){
-            try{
-                textFromClient = in.readLine();
-                announce(clientName, textFromClient);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
+
 }
